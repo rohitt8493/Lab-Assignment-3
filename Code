@@ -1,0 +1,153 @@
+import java.util.*;
+import java.util.concurrent.*;
+
+interface RecordActions {
+    void addStudent(Student student);
+    Student getStudentByRoll(Integer rollNo) throws StudentNotFoundException;
+    void displayStudent(Student student);
+}
+
+class StudentNotFoundException extends Exception {
+    public StudentNotFoundException(String message) {
+        super(message);
+    }
+}
+
+class Student {
+    private Integer rollNo;
+    private String name;
+    private String email;
+    private String course;
+    private Double marks;
+
+    public Student(Integer rollNo, String name, String email, String course, Double marks) {
+        this.rollNo = rollNo;
+        this.name = name;
+        this.email = email;
+        this.course = course;
+        this.marks = marks;
+    }
+
+    public Integer getRollNo() {
+        return rollNo;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public String getCourse() {
+        return course;
+    }
+
+    public Double getMarks() {
+        return marks;
+    }
+
+    public String getGrade() {
+        double m = marks;
+        if (m >= 85) return "A";
+        if (m >= 70) return "B";
+        if (m >= 55) return "C";
+        if (m >= 40) return "D";
+        return "F";
+    }
+}
+
+class Loader implements Runnable {
+    public void run() {
+        System.out.println("Simulate Loading .....");
+        try {
+            Thread.sleep(800);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+    }
+}
+
+class StudentManager implements RecordActions {
+    private final Map<Integer, Student> records = new ConcurrentHashMap<>();
+
+    public void addStudent(Student student) {
+        records.put(student.getRollNo(), student);
+    }
+
+    public Student getStudentByRoll(Integer rollNo) throws StudentNotFoundException {
+        Student s = records.get(rollNo);
+        if (s == null) throw new StudentNotFoundException("Student not found");
+        return s;
+    }
+
+    public void displayStudent(Student student) {
+        System.out.println("Roll No: " + student.getRollNo());
+        System.out.println("Name: " + student.getName());
+        System.out.println("Email: " + student.getEmail());
+        System.out.println("Course: " + student.getCourse());
+        System.out.println("Marks: " + student.getMarks());
+        System.out.println("Grade: " + student.getGrade());
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        StudentManager manager = new StudentManager();
+        Integer rollNo = null;
+        String name = null;
+        String email = null;
+        String course = null;
+        Double marks = null;
+        try {
+            System.out.print("Enter Roll No (Integer): ");
+            String rollInput = sc.nextLine();
+            rollNo = Integer.valueOf(rollInput.trim());
+
+            System.out.print("Enter Name: ");
+            name = sc.nextLine();
+            System.out.print("Enter Email: ");
+            email = sc.nextLine();
+            System.out.print("Enter Course: ");
+            course = sc.nextLine();
+
+            System.out.print("Enter Marks: ");
+            String marksInput = sc.nextLine();
+            marks = Double.valueOf(marksInput.trim());
+
+            if (name == null || name.trim().isEmpty() || course == null || course.trim().isEmpty()) {
+                System.out.println("Name or course cannot be empty");
+                return;
+            }
+            if (marks < 0 || marks > 100) {
+                System.out.println("Invalid input");
+                return;
+            }
+
+            Thread loaderThread = new Thread(new Loader());
+            loaderThread.start();
+            try {
+                loaderThread.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+
+            Student student = new Student(rollNo, name, email, course, marks);
+            manager.addStudent(student);
+            try {
+                Student fetched = manager.getStudentByRoll(rollNo);
+                manager.displayStudent(fetched);
+            } catch (StudentNotFoundException e) {
+                System.out.println("Invalid input");
+            }
+        } catch (NumberFormatException e) {
+            System.out.println("Invalid input");
+        } catch (NullPointerException e) {
+            System.out.println("Invalid input");
+        } finally {
+            System.out.println("Program execution completed.");
+        }
+    }
+}
