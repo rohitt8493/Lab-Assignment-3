@@ -36,5 +36,5 @@ The system adheres to all assignment requirements, including the use of custom e
 
 ***
 
-| **Name** | Sanchit Yadav |
-| **Roll Number** | 2401010162 |
+| **Name** | Rohit Kumar |
+| **Roll Number** | 2401010255 |
